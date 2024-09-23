@@ -5,20 +5,20 @@ const jwt = require('jsonwebtoken');
 const QRCode = require('qrcode');
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(cors({
-    origin: 'http://localhost:5173' // Adjust the port if you're using Vite or a different frontend port
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173'  // Adjust the port if you're using Vite or a different frontend port
   }));
 // Database connection
 const db = mysql.createConnection({
-  host: 'b6pucsnokobskoexyus7-mysql.services.clever-cloud.com',
-  user: 'uilprtlqpx3dwio4',  // replace with your MySQL username
-  password: 'vhXchgytkVNT2406uQya',  // replace with your MySQL password
-  database: 'b6pucsnokobskoexyus7'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
 });
 
 db.connect((err) => {
