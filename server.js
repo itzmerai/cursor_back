@@ -35,6 +35,7 @@ app.get("/",(req, res)=> {
 
 // Login route
 app.post('/login', (req, res) => {
+  res.json({ message: 'hello login'});
     const { username, password } = req.body;
   
     // Check admin table
