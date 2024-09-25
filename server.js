@@ -15,10 +15,10 @@ app.use(cors({
   }));
 // Database connection
 const db = mysql.createConnection({
-  host: 'b6pucsnokobskoexyus7-mysql.services.clever-cloud.com',
-  user: 'uilprtlqpx3dwio4',  // replace with your MySQL username
-  password: 'vhXchgytkVNT2406uQya',  // replace with your MySQL password
-  database: 'b6pucsnokobskoexyus7'
+  host: 'localhost',
+  user: 'root',  // replace with your MySQL username
+  password: '',  // replace with your MySQL password
+  database: 'cursor'
 });
 
 db.connect((err) => {
@@ -125,7 +125,11 @@ app.post('/admin/student', (req, res) => {
   
 // Student route
 app.post('/student/scan', (req, res) => {
-  const { studentId, companyQr, scanTime } = req.body;
+  const { studentId, companyQr, scanTime, address } = req.body;
+
+  if (!address) {
+    return res.status(400).json({ error: 'Address (location) is required' });
+  }
 
   // Correct SQL query to find the company by the QR code text
   db.query('SELECT company_id FROM company WHERE company_qr = ?', [companyQr], (err, result) => {
@@ -141,19 +145,40 @@ app.post('/student/scan', (req, res) => {
 
     const companyId = result[0].company_id;
 
-    // Insert scan data into the timesheet table
-    db.query('INSERT INTO timesheet (student_id, company_id, time) VALUES (?, ?, ?)', [studentId, companyId, scanTime], (err, result) => {
-      if (err) {
-        console.error('Error inserting into timesheet:', err);
-        return res.status(500).json({ error: 'Database error while inserting scan' });
-      }
+    // Parse the scanTime to create separate date and time fields
+    const scanDate = new Date(scanTime);
+    const date = scanDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    const time = scanDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }); // 12-hour format
 
-      res.json({ message: 'Time in done' });
-    });
+    // Insert scan data into the timesheet table
+    db.query('INSERT INTO timesheet (student_id, company_id, date, time, adress) VALUES (?, ?, ?, ?, ?)', 
+      [studentId, companyId, date, time, address], 
+      (err, result) => {
+        if (err) {
+          console.error('Error inserting into timesheet:', err);
+          return res.status(500).json({ error: 'Database error while inserting scan' });
+        }
+
+        res.json({ message: 'Time in recorded successfully' });
+      }
+    );
   });
 });
 
+//timesheet route
+app.get('/admin/timesheets', (req, res) => {
+  const query = `
+    SELECT time_id, student_id, company_id, date, time, adress 
+    FROM timesheet
+  `;
 
+  db.query(query, (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to fetch timesheets' });
+    }
+    res.json(results);
+  });
+});
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
