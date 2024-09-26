@@ -6,19 +6,12 @@ const QRCode = require('qrcode');
 
 const app = express();
 const port = 5000;
-const allowedOrigins = ['http://localhost:5173', 'https://frontni.vercel.app'];
+
 // Middleware
-app.use(cors());
 app.use(express.json());
 app.use(cors({
-  origin: function (origin, callback) {
-    // Check if the request origin is allowed
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  }
+  origin: '*',  // Allow requests from all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
 }));
 // Database connection
 const db = mysql.createConnection({
